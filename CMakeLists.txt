@@ -139,7 +139,7 @@ include_directories(
 # Declare a C++ executable
 add_executable(can_talon_srx_node
   src/can_talon_srx_node.cpp
-  src/wpilib/CanTalonSrx.cpp
+  src/wpilib/CanTalonSRX.cpp
   src/wpilib/CtreCanNode.cpp)
 
 ## Add cmake target dependencies of the executable
