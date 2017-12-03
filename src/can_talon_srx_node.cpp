@@ -95,5 +95,3 @@ void FRC_NetworkCommunication_CANSessionMux_getCANStatus(float *percentBusUtiliz
 }
 
 }
-
-
