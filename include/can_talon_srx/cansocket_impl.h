@@ -3,6 +3,12 @@
 
 #include "can_talon_srx/can_base.h"
 
+#include <atomic>
+#include <deque>
+#include <memory>
+#include <mutex>
+#include <thread>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace can_talon_srx
@@ -11,8 +17,22 @@ namespace can_talon_srx
   class CanSocketInterface: CanInterface
   {
     private:
+      struct Message {
+        uint32_t arbID;
+        uint8_t data[8];
+        uint8_t len;
+      };
+
+      struct MessageBox {
+        std::mutex lock;
+        std::unordered_map<uint32_t, std::shared_ptr<Message> > messages;
+      };
+
       int socket_;
-      std::unordered_set<uint32_t> sendingIds;
+      std::atomic<bool> running;
+      std::unordered_set<uint32_t> sendingIds_;
+      std::shared_ptr<MessageBox> receivedMessages_;
+      std::thread readThread;
     public:
       CanSocketInterface(const char* interface_name);
       ~CanSocketInterface();
