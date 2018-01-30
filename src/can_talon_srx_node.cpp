@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 
   ROS_INFO("setting up CAN interface...");
   can_interface = boost::shared_ptr<can_talon_srx::CanInterface>(
-      new can_talon_srx::CanSocketInterface("slcan0"));
+      new can_talon_srx::CanSocketInterface("can0"));
   ROS_INFO("CAN interface setup succesful!");
 
   CanTalonSRX testTalon1(1);
@@ -32,38 +32,38 @@ int main(int argc, char **argv)
 
   std::atomic<bool> running(true);
   auto thr = std::thread([&]() {
-    testTalon1.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
-    testTalon2.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
-    testTalon3.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
-    testTalon4.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
-    testTalon5.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
-    testTalon6.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
-    testTalon7.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
-    testTalon8.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
+    testTalon1.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 100);
+    testTalon2.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 100);
+    testTalon3.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 100);
+    testTalon4.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 100);
+    testTalon5.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 100);
+    testTalon6.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 100);
+    testTalon7.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 100);
+    testTalon8.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 100);
     int count = 0;
     while (running)
     {
-      if ((count % 200) < 100)
+      if ((count % 200) == 100)
       {
-        testTalon1.SetDemand(500);
-        testTalon2.SetDemand(500);
-        testTalon3.SetDemand(500);
-        testTalon4.SetDemand(500);
-        testTalon5.SetDemand(500);
-        testTalon6.SetDemand(500);
-        testTalon7.SetDemand(500);
-        testTalon8.SetDemand(500);
+        testTalon1.SetDemand(100);
+        testTalon2.SetDemand(100);
+        testTalon3.SetDemand(100);
+        testTalon4.SetDemand(100);
+        testTalon5.SetDemand(100);
+        testTalon6.SetDemand(100);
+        testTalon7.SetDemand(100);
+        testTalon8.SetDemand(100);
       }
-      else if ((count % 200) > 100)
+      else if ((count % 200) == 199)
       {
-        testTalon1.SetDemand(-500);
-        testTalon2.SetDemand(-500);
-        testTalon3.SetDemand(-500);
-        testTalon4.SetDemand(-500);
-        testTalon5.SetDemand(-500);
-        testTalon6.SetDemand(-500);
-        testTalon7.SetDemand(-500);
-        testTalon8.SetDemand(-500);
+        testTalon1.SetDemand(-100);
+        testTalon2.SetDemand(-100);
+        testTalon3.SetDemand(-100);
+        testTalon4.SetDemand(-100);
+        testTalon5.SetDemand(-100);
+        testTalon6.SetDemand(-100);
+        testTalon7.SetDemand(-100);
+        testTalon8.SetDemand(-100);
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       ++count;

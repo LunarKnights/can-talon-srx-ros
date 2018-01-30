@@ -25,6 +25,7 @@ namespace can_talon_srx
     struct sockaddr_can addr;
     struct ifreq ifr;
 
+    // socket_ = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     socket_ = socket(PF_CAN, SOCK_DGRAM, CAN_BCM);
     if (socket < 0)
     {
@@ -38,6 +39,7 @@ namespace can_talon_srx
     addr.can_family = AF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
 
+    // if (bind(socket_, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     if (connect(socket_, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
       ROS_FATAL("unable to connect socket!");
@@ -235,10 +237,12 @@ namespace can_talon_srx
       // write the request to the kernel and add the arbitration ID to the sending set
 
       ROS_INFO("sending repeated message for %08x %d ms", arbID, periodMs);
+      ROS_INFO("%d %x %x %x %x %x %x %x %x", dataSize, data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
       can_msg.msg_head.opcode = TX_SETUP;
       can_msg.msg_head.flags = SETTIMER | STARTTIMER;
       can_msg.msg_head.count = 0;
-      // can_msg.msg_head.ival1 = 0;
+      can_msg.msg_head.ival1.tv_sec = 0;
+      can_msg.msg_head.ival1.tv_usec = 0;
       can_msg.msg_head.ival2.tv_sec = periodMs / 1000;
       can_msg.msg_head.ival2.tv_usec = 1000 * (periodMs % 1000);
       can_msg.msg_head.can_id = arbID;
@@ -256,6 +260,7 @@ namespace can_talon_srx
       }
 
       int nbytes = write(socket_, &can_msg, sizeof(can_msg));
+      // int nbytes = write(socket_, &can_msg.frames[0], sizeof(can_msg.frames[0]));
       if (nbytes < 0)
       {
         ROS_ERROR("unable to send CAN message: %d", errno);
