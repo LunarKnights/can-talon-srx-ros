@@ -1,6 +1,8 @@
 #include <cstring>
 #include <stdexcept>
 
+#include <unistd.h>
+
 #include <linux/can.h>
 #include <linux/can/bcm.h>
 
@@ -11,9 +13,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include <unistd.h>
-
-#include "ros/ros.h"
+#include <ros/ros.h>
 
 #include "can_talon_srx/cansocket_impl.h"
 

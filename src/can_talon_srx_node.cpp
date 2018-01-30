@@ -1,12 +1,45 @@
+#include <atomic>
+#include <chrono>
+#include <thread>
+
 #include <ros/ros.h>
 
+#include "wpilib/CanTalonSRX.h"
+
 #include "can_talon_srx/can_base.h"
+#include "can_talon_srx/cansocket_impl.h"
 
 boost::shared_ptr<can_talon_srx::CanInterface> can_interface;
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "can_talon_srx_node");
+
+  ROS_INFO("setting up CAN interface...");
+  can_interface = boost::shared_ptr<can_talon_srx::CanInterface>(
+      new can_talon_srx::CanSocketInterface("slcan0"));
+  ROS_INFO("CAN interface setup succesful!");
+
+  CanTalonSRX testTalon(0, 10, 10);
+
+  std::atomic<bool> running(true);
+  auto thr = std::thread([&]() {
+    testTalon.SetModeSelect(CanTalonSRX::kMode_VelocityCloseLoop, 1.0);
+    int count = 0;
+    while (running)
+    {
+      if ((count % 200) == 0)
+      {
+        testTalon.Set(1.0);
+      }
+      else if ((count % 200) == 100)
+      {
+        testTalon.Set(-1.0);
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      ++count;
+    }
+  });
 
   ros::Rate update_rate(10);
 
@@ -15,6 +48,8 @@ int main(int argc, char **argv)
     ros::spinOnce();
     update_rate.sleep();
   }
+  running = false;
+  thr.join();
 
   return 0;
 }

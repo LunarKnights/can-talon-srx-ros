@@ -14,7 +14,7 @@
 namespace can_talon_srx
 {
 
-  class CanSocketInterface: CanInterface
+  class CanSocketInterface : public CanInterface
   {
     private:
       struct Message {
