@@ -30,6 +30,7 @@ namespace can_talon_srx
     {
       ROS_FATAL("unable to create socket!");
     }
+    ROS_INFO("successfully created socket!");
 
     strncpy(ifr.ifr_name, interface_name, IFNAMSIZ);
     ioctl(socket_, SIOCGIFINDEX, &ifr);
@@ -41,32 +42,39 @@ namespace can_talon_srx
     {
       ROS_FATAL("unable to connect socket!");
     }
+    ROS_INFO("successfully connected socket!");
 
     auto messageBox = std::make_shared<MessageBox>();
     receivedMessages_ = messageBox;
 
+    ROS_INFO("spawning thread!");
     // start up a thread to read messages
-    readThread = std::thread([&]()
+    readThread = std::thread([](std::string name, std::shared_ptr<MessageBox> messages, std::atomic<bool>* running)
     {
-        // copy the socket file descriptor so we can make it nonblocking
-        // this prevents the read() call from ever blocking, making sure
-        // this thread doesn't ever get blocked
+        ROS_INFO("thread start");
+        struct sockaddr_can addr;
+        struct ifreq ifr;
+
         int s = socket(PF_CAN, SOCK_RAW, CAN_RAW);
-        if (socket < 0)
+        if (s < 0)
         {
           ROS_FATAL("unable to create socket!");
         }
+        ROS_INFO("successfully created listener socket!");
 
-        strncpy(ifr.ifr_name, interface_name, IFNAMSIZ);
+        strncpy(ifr.ifr_name, name.c_str(), IFNAMSIZ);
+        ROS_INFO("binding to %s...", ifr.ifr_name);
         ioctl(s, SIOCGIFINDEX, &ifr);
 
         addr.can_family = AF_CAN;
         addr.can_ifindex = ifr.ifr_ifindex;
+        // addr.can_ifindex = 0;
 
-        if (connect(s, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
-          ROS_FATAL("unable to connect socket!");
+          ROS_FATAL("unable to bind socket! %d", errno);
         }
+        ROS_INFO("successfully bound listener socket!");
 
         int flags = fcntl(s, F_GETFL, 0);
         if (flags == -1)
@@ -78,12 +86,11 @@ namespace can_talon_srx
         {
           ROS_FATAL("unable to set socket flags!");
         }
-
-        auto messages = messageBox;
+        ROS_INFO("successfully set listener flags!");
 
         fd_set readfds;
         struct timeval timeout;
-        while(running)
+        while (*running)
         {
           // set up a fd set
           FD_ZERO(&readfds);
@@ -95,16 +102,23 @@ namespace can_talon_srx
           int retval = select(1, &readfds, 0, 0, &timeout);
           if (retval == -1)
           {
-            // TODO: report error
+            ROS_WARN("select failed! %d", errno);
           }
-          else
+          else if (retval == 0)
           {
-            // read from s to get can frames and work with them accordingly
-            struct can_frame frame;
-            int nbytes = read(s, &frame, sizeof(frame));
+            // ROS_INFO("listener timeout");
+          }
+          // read from s to get can frames and work with them accordingly
+          struct can_frame frame;
+          int nbytes = 0;
+          do {
+            nbytes = read(s, &frame, sizeof(frame));
             if (nbytes < 0)
             {
-              ROS_WARN("read fail %d", errno);
+              if (errno != 11)
+              {
+                ROS_WARN("read fail %d", errno);
+              }
             }
             else if (nbytes < sizeof(frame))
             {
@@ -116,6 +130,7 @@ namespace can_talon_srx
               // flip ID length bit
               uint32_t arbID = frame.can_id ^ (1 << 31);
               auto &ptr = messages->messages[arbID];
+              // ROS_INFO("packet %08x", arbID);
               auto new_frame = Message
               {
                 .arbID=arbID,
@@ -125,11 +140,11 @@ namespace can_talon_srx
               memcpy(&new_frame.data, frame.data, 8);
               ptr = std::make_shared<Message>(new_frame);
             }
-          }
+          } while (nbytes > 0);
         }
 
         close(s);
-    });
+    }, std::string(interface_name), messageBox, &running);
   }
 
   CanSocketInterface::~CanSocketInterface()
@@ -161,6 +176,7 @@ namespace can_talon_srx
       // if it has, cancel that message
       if (sendingIds_.find(arbID) != sendingIds_.end())
       {
+        ROS_INFO("deleting old message for %08x", arbID);
         rm_msg.msg_head.opcode = TX_DELETE;
         // rm_msg.msg_head.flags = 0;
         // rm_msg.msg_head.count = 0;
@@ -183,6 +199,7 @@ namespace can_talon_srx
           sendingIds_.erase(arbID);
         }
       }
+      ROS_INFO("sending single shot message for %08x", arbID);
       // then send this message as a single shot
       can_msg.msg_head.opcode = TX_SEND;
       can_msg.msg_head.flags = 0;
@@ -217,6 +234,7 @@ namespace can_talon_srx
     {
       // write the request to the kernel and add the arbitration ID to the sending set
 
+      ROS_INFO("sending repeated message for %08x %d ms", arbID, periodMs);
       can_msg.msg_head.opcode = TX_SETUP;
       can_msg.msg_head.flags = SETTIMER | STARTTIMER;
       can_msg.msg_head.count = 0;
@@ -253,6 +271,7 @@ namespace can_talon_srx
 
   void CanSocketInterface::receiveMessage(uint32_t *messageID, uint32_t messageIDMask, uint8_t *data, uint8_t *dataSize, uint32_t *timeStamp, int32_t *status)
   {
+    ROS_INFO("receiveMessage start");
     // NOTE: not entirely sure what messageIDMask does; it's usually set to something
     // like 0x1FFFFFFF or 0xFFFFFFFF so I'm guessing it doesn't matter that much
     // Also not sure what timeStamp is for; it's not used so I'm gonna ignore it for now
@@ -263,17 +282,25 @@ namespace can_talon_srx
     // So we flip it
     const uint32_t arbID = (*messageID ^ (1 << 31)) & messageIDMask;
     // check the message box to see if a message has been received
+    ROS_INFO("recvMsg lock start");
     std::lock_guard<std::mutex> guard(receivedMessages_->lock);
+    ROS_INFO("recvMsg lookup");
     auto& entry = receivedMessages_->messages[arbID];
     if (entry)
     {
+      ROS_INFO("found entry!");
       *status = 0;
       // swap the entry out
       std::shared_ptr<Message> msg;
+      ROS_INFO("swapping entries");
       entry.swap(msg);
+      ROS_INFO("swap success");
+      ROS_INFO("msg len: %d, id: %xd", msg->len, arbID);
 
       // copy the data out
+      ROS_INFO("copying data");
       memcpy(data, msg->data, msg->len);
+      ROS_INFO("copying data len");
       *dataSize = msg->len;
     }
     else
@@ -281,6 +308,7 @@ namespace can_talon_srx
       // no entry; set status accordingly
       *status = 1;
     }
+    ROS_INFO("receiveMessage end");
   }
 
   void CanSocketInterface::openStreamSession(uint32_t *sessionHandle, uint32_t messageID, uint32_t messageIDMask, uint32_t maxMessages, int32_t *status)

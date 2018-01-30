@@ -14,27 +14,56 @@ boost::shared_ptr<can_talon_srx::CanInterface> can_interface;
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "can_talon_srx_node");
+  auto nh = ros::NodeHandle();
 
   ROS_INFO("setting up CAN interface...");
   can_interface = boost::shared_ptr<can_talon_srx::CanInterface>(
       new can_talon_srx::CanSocketInterface("slcan0"));
   ROS_INFO("CAN interface setup succesful!");
 
-  CanTalonSRX testTalon(0, 10, 10);
+  CanTalonSRX testTalon1(1);
+  CanTalonSRX testTalon2(2);
+  CanTalonSRX testTalon3(3);
+  CanTalonSRX testTalon4(4);
+  CanTalonSRX testTalon5(5);
+  CanTalonSRX testTalon6(6);
+  CanTalonSRX testTalon7(7);
+  CanTalonSRX testTalon8(8);
 
   std::atomic<bool> running(true);
   auto thr = std::thread([&]() {
-    testTalon.SetModeSelect(CanTalonSRX::kMode_VelocityCloseLoop, 1.0);
+    testTalon1.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
+    testTalon2.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
+    testTalon3.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
+    testTalon4.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
+    testTalon5.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
+    testTalon6.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
+    testTalon7.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
+    testTalon8.SetModeSelect(CanTalonSRX::kMode_DutyCycle, 500);
     int count = 0;
     while (running)
     {
-      if ((count % 200) == 0)
+      if ((count % 200) < 100)
       {
-        testTalon.Set(1.0);
+        testTalon1.SetDemand(500);
+        testTalon2.SetDemand(500);
+        testTalon3.SetDemand(500);
+        testTalon4.SetDemand(500);
+        testTalon5.SetDemand(500);
+        testTalon6.SetDemand(500);
+        testTalon7.SetDemand(500);
+        testTalon8.SetDemand(500);
       }
-      else if ((count % 200) == 100)
+      else if ((count % 200) > 100)
       {
-        testTalon.Set(-1.0);
+        testTalon1.SetDemand(-500);
+        testTalon2.SetDemand(-500);
+        testTalon3.SetDemand(-500);
+        testTalon4.SetDemand(-500);
+        testTalon5.SetDemand(-500);
+        testTalon6.SetDemand(-500);
+        testTalon7.SetDemand(-500);
+        testTalon8.SetDemand(-500);
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       ++count;
