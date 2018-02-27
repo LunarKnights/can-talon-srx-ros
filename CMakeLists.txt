@@ -107,8 +107,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES lk_rover
+ INCLUDE_DIRS include
+ LIBRARIES can_talon_srx_ros
  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
 #  DEPENDS system_lib
 )
@@ -126,10 +126,13 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-## Declare a C++ library
-# add_library(lk_rover
-#   src/${PROJECT_NAME}/lk_rover.cpp
-# )
+# Declare a C++ library
+add_library(can_talon_srx_ros
+  src/wpilib_interface.cpp
+  src/cansocket_impl.cpp
+  src/wpilib/CanTalonSRX.cpp
+  src/wpilib/CtreCanNode.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -139,16 +142,18 @@ include_directories(
 # Declare a C++ executable
 add_executable(can_talon_srx_node
   src/can_talon_srx_node.cpp
-  src/cansocket_impl.cpp
-  src/wpilib/CanTalonSRX.cpp
-  src/wpilib/CtreCanNode.cpp)
+)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(can_talon_srx_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(can_talon_srx_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(can_talon_srx_node
+  can_talon_srx_ros
   ${catkin_LIBRARIES}
 )
 

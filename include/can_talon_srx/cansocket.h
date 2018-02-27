@@ -33,8 +33,10 @@ namespace can_talon_srx
       std::unordered_set<uint32_t> sendingIds_;
       std::shared_ptr<MessageBox> receivedMessages_;
       std::thread readThread;
-    public:
+    protected:
       CanSocketInterface(const char* interface_name);
+    public:
+      static void Init(const char* interface_name);
       ~CanSocketInterface();
 
       void sendMessage(uint32_t arbId, const uint8_t *data, uint8_t dataSize, int32_t periodMs, int32_t *status) override;

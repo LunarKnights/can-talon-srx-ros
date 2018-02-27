@@ -15,7 +15,12 @@
 
 #include <ros/ros.h>
 
-#include "can_talon_srx/cansocket_impl.h"
+#include <memory>
+
+#include "can_talon_srx/can_base.h"
+#include "can_talon_srx/cansocket.h"
+
+extern std::shared_ptr<can_talon_srx::CanInterface> can_interface;
 
 namespace can_talon_srx
 {
@@ -154,6 +159,16 @@ namespace can_talon_srx
     running = false;
     readThread.join();
     close(socket_);
+  }
+
+  void CanSocketInterface::Init(const char* interface_name)
+  {
+    if (can_interface)
+    {
+      ROS_ERROR("trying to initialize an already initialized CAN interface!");
+      return;
+    }
+    can_interface = std::shared_ptr<CanInterface>(new CanSocketInterface(interface_name));
   }
 
   void CanSocketInterface::sendMessage(uint32_t arbID, const uint8_t *data, uint8_t dataSize, int32_t periodMs, int32_t *status)
