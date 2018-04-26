@@ -40,27 +40,41 @@ int main(int argc, char **argv)
     int count = 0;
     while (running)
     {
+      if ((count % 10) == 0)
+      {
+        int vals[8];
+        testTalon1.GetEncPosition(vals[0]);
+        testTalon2.GetEncPosition(vals[1]);
+        testTalon3.GetEncPosition(vals[2]);
+        testTalon4.GetEncPosition(vals[3]);
+        testTalon5.GetEncPosition(vals[4]);
+        testTalon6.GetEncPosition(vals[5]);
+        testTalon7.GetEncPosition(vals[6]);
+        testTalon8.GetEncPosition(vals[7]);
+        ROS_INFO("position: %d %d %d %d %d %d %d %d",
+            vals[0], vals[1], vals[2], vals[3], vals[4], vals[5], vals[6], vals[7]);
+      }
       if ((count % 200) == 100)
       {
-        testTalon1.SetDemand(100);
-        testTalon2.SetDemand(100);
-        testTalon3.SetDemand(100);
-        testTalon4.SetDemand(100);
-        testTalon5.SetDemand(100);
-        testTalon6.SetDemand(100);
-        testTalon7.SetDemand(100);
-        testTalon8.SetDemand(100);
+        testTalon1.SetDemand(200);
+        testTalon2.SetDemand(200);
+        testTalon3.SetDemand(200);
+        testTalon4.SetDemand(200);
+        testTalon5.SetDemand(200);
+        testTalon6.SetDemand(200);
+        testTalon7.SetDemand(200);
+        testTalon8.SetDemand(200);
       }
       else if ((count % 200) == 199)
       {
-        testTalon1.SetDemand(-100);
-        testTalon2.SetDemand(-100);
-        testTalon3.SetDemand(-100);
-        testTalon4.SetDemand(-100);
-        testTalon5.SetDemand(-100);
-        testTalon6.SetDemand(-100);
-        testTalon7.SetDemand(-100);
-        testTalon8.SetDemand(-100);
+        testTalon1.SetDemand(-200);
+        testTalon2.SetDemand(-200);
+        testTalon3.SetDemand(-200);
+        testTalon4.SetDemand(-200);
+        testTalon5.SetDemand(-200);
+        testTalon6.SetDemand(-200);
+        testTalon7.SetDemand(-200);
+        testTalon8.SetDemand(-200);
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       ++count;

@@ -193,7 +193,7 @@ namespace can_talon_srx
       // if it has, cancel that message
       if (sendingIds_.find(arbID) != sendingIds_.end())
       {
-        ROS_INFO("deleting old message for %08x", arbID);
+        // ROS_INFO("deleting old message for %08x", arbID);
         rm_msg.msg_head.opcode = TX_DELETE;
         // rm_msg.msg_head.flags = 0;
         // rm_msg.msg_head.count = 0;
@@ -216,7 +216,7 @@ namespace can_talon_srx
           sendingIds_.erase(arbID);
         }
       }
-      ROS_INFO("sending single shot message for %08x", arbID);
+      // ROS_INFO("sending single shot message for %08x", arbID);
       // then send this message as a single shot
       can_msg.msg_head.opcode = TX_SEND;
       can_msg.msg_head.flags = 0;
@@ -251,8 +251,8 @@ namespace can_talon_srx
     {
       // write the request to the kernel and add the arbitration ID to the sending set
 
-      ROS_INFO("sending repeated message for %08x %d ms", arbID, periodMs);
-      ROS_INFO("%d %x %x %x %x %x %x %x %x", dataSize, data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
+      // ROS_INFO("sending repeated message for %08x %d ms", arbID, periodMs);
+      // ROS_INFO("%d %x %x %x %x %x %x %x %x", dataSize, data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
       can_msg.msg_head.opcode = TX_SETUP;
       can_msg.msg_head.flags = SETTIMER | STARTTIMER;
       can_msg.msg_head.count = 0;
@@ -291,7 +291,7 @@ namespace can_talon_srx
 
   void CanSocketInterface::receiveMessage(uint32_t *messageID, uint32_t messageIDMask, uint8_t *data, uint8_t *dataSize, uint32_t *timeStamp, int32_t *status)
   {
-    ROS_INFO("receiveMessage start");
+    // ROS_INFO("receiveMessage start");
     // NOTE: not entirely sure what messageIDMask does; it's usually set to something
     // like 0x1FFFFFFF or 0xFFFFFFFF so I'm guessing it doesn't matter that much
     // Also not sure what timeStamp is for; it's not used so I'm gonna ignore it for now
@@ -302,25 +302,23 @@ namespace can_talon_srx
     // So we flip it
     const uint32_t arbID = (*messageID ^ (1 << 31)) & messageIDMask;
     // check the message box to see if a message has been received
-    ROS_INFO("recvMsg lock start");
     std::lock_guard<std::mutex> guard(receivedMessages_->lock);
-    ROS_INFO("recvMsg lookup");
     auto& entry = receivedMessages_->messages[arbID];
     if (entry)
     {
-      ROS_INFO("found entry!");
+      // ROS_INFO("found entry!");
       *status = 0;
       // swap the entry out
       std::shared_ptr<Message> msg;
-      ROS_INFO("swapping entries");
+      // ROS_INFO("swapping entries");
       entry.swap(msg);
-      ROS_INFO("swap success");
-      ROS_INFO("msg len: %d, id: %xd", msg->len, arbID);
+      // ROS_INFO("swap success");
+      // ROS_INFO("msg len: %d, id: %xd", msg->len, arbID);
 
       // copy the data out
-      ROS_INFO("copying data");
+      // ROS_INFO("copying data");
       memcpy(data, msg->data, msg->len);
-      ROS_INFO("copying data len");
+      // ROS_INFO("copying data len");
       *dataSize = msg->len;
     }
     else
@@ -328,7 +326,7 @@ namespace can_talon_srx
       // no entry; set status accordingly
       *status = 1;
     }
-    ROS_INFO("receiveMessage end");
+    // ROS_INFO("receiveMessage end");
   }
 
   void CanSocketInterface::openStreamSession(uint32_t *sessionHandle, uint32_t messageID, uint32_t messageIDMask, uint32_t maxMessages, int32_t *status)
