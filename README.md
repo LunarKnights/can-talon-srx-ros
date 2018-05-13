@@ -116,7 +116,6 @@ Additionally, you'll need to add this as a dependency in your package's `CMakeLi
 
 ```
 catkin_package(
- INCLUDE_DIRS # ... your stuff
  LIBRARIES can_talon_srx_ros # ... your stuff
  # ... other config stuff
 )
@@ -130,7 +129,7 @@ When you want to use this library, you will need to include the appropriate head
 #include "wpilib/CanTalonSRX.h"
 ```
 
-and then somewhere early on in your code, you will need to initialize the library by calling `can_talon_srx::CanSocketInterface::Init`:
+and then somewhere early on in your code, you will need to initialize the library by calling `can_talon_srx::CanSocketInterface::Init`, passing in the name of the CAN interface:
 
 ```
 can_talon_srx::CanSocketInterface::Init("can0");
@@ -147,6 +146,7 @@ std::shared_ptr<CanTalonSRX> motor = std::shared_ptr<CanTalonSRX>(new CanTalonSR
 // set it to duty cycle mode
 motor->SetModeSelect(CanTalonSRX::kMode_DutyCycle, 100);
 
+// set motor encoder count
 int pos = 0;
 motor->GetEncPosition(pos);
 
